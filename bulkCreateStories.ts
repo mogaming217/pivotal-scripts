@@ -13,13 +13,14 @@ type Data = {
   description?: string
 }
 
-const csvRowToData = (row: any): Data => {
+// 1行から複数個作成してもOK
+const csvRowToData = (row: any): Data[] => {
   const name = `【${row.app}】${row.usecase}`
   const textList: string[] = []
   if (row.path) textList.push(`■path\n${row.path}`)
   if (row.memo) textList.push(`■memo\n${row.memo}`)
   if (row.figma) textList.push(`■figma\n${row.figma}`)
-  return { name, storyType: 'feature', description: textList.join('\n\n').replace(/\\r\\n/, '\n') }
+  return [{ name, storyType: 'feature', description: textList.join('\n\n').replace(/\\r\\n/, '\n') }]
 }
 
 const main = async () => {
@@ -70,7 +71,7 @@ const getDataFromCSV = (): Promise<Data[]> => {
     parser.on('readable', () => {
       let record
       while ((record = parser.read()) !== null) {
-        data.push(csvRowToData(record))
+        data.push(...csvRowToData(record))
       }
     })
 
