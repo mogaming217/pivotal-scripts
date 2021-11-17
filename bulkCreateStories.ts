@@ -7,20 +7,27 @@ import prompts from 'prompts'
 const log = console.log
 const CSV_FILE_PATH = './pivotalStories.csv'
 
-type Data = {
+type Story = {
   name: string
   storyType: 'feature' | 'bug' | 'chore' | 'release'
   description?: string
+  labels?: string[]
 }
 
 // 1行から複数個作成してもOK
-const csvRowToData = (row: any): Data[] => {
-  const name = `【${row.app}】${row.usecase}`
+const csvRowToData = (row: any): Story[] => {
+  const name = `${row.usecase}`
   const textList: string[] = []
   if (row.path) textList.push(`■path\n${row.path}`)
   if (row.memo) textList.push(`■memo\n${row.memo}`)
   if (row.figma) textList.push(`■figma\n${row.figma}`)
-  return [{ name, storyType: 'feature', description: textList.join('\n\n').replace(/\\r\\n/, '\n') }]
+  const description = textList.join('\n\n').replace(/\\r\\n/, '\n')
+  return ['backend', 'frontend', 'style'].map(item => ({
+    name,
+    description,
+    storyType: 'feature',
+    labels: [item, row.app],
+  }))
 }
 
 const main = async () => {
@@ -51,6 +58,7 @@ const main = async () => {
         name: story.name,
         story_type: story.storyType,
         description: story.description,
+        labels: story.labels,
       },
       {
         headers: {
@@ -62,12 +70,12 @@ const main = async () => {
   }
 }
 
-const getDataFromCSV = (): Promise<Data[]> => {
+const getDataFromCSV = (): Promise<Story[]> => {
   const csv = readFileSync(CSV_FILE_PATH, 'utf8')
   const parser = parse(csv, { columns: true })
-  const data: Data[] = []
+  const data: Story[] = []
 
-  return new Promise<Data[]>(resolve => {
+  return new Promise<Story[]>(resolve => {
     parser.on('readable', () => {
       let record
       while ((record = parser.read()) !== null) {
